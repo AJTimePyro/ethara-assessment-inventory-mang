@@ -1,12 +1,15 @@
+from decimal import Decimal
+
 from core.db import Base
-from sqlalchemy import Column, Integer, Numeric, String
+from sqlalchemy import Integer, Numeric, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 class Product(Base):
     __tablename__ = "products"
 
-    id = Column(Integer, primary_key=True, index=True)
-    sku_code = Column(String, unique=True, nullable=False)
-    product_name = Column(String, nullable=False)
-    price = Column(Numeric(10, 2), nullable=False)
-    quantity = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    sku_code: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    product_name: Mapped[str] = mapped_column(String, nullable=False)
+    price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
