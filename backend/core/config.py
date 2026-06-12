@@ -1,9 +1,12 @@
-import os
-
-from dotenv import load_dotenv
-
-load_dotenv()
+from pydantic import PostgresDsn
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Config:
-    DB_URL = os.getenv("DB_URL", "")
+class Settings(BaseSettings):
+    DB_URL: PostgresDsn
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+
+# Instantiate the settings
+settings = Settings()  # type: ignore
