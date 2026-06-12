@@ -1,5 +1,5 @@
-from sqlalchemy.orm import declarative_base
+from .customer import Customer
+from .order import Order, OrderItem
+from .product import Product
 
-Base = declarative_base()
-
-__all__ = []
+__all__ = ["Customer", "Order", "OrderItem", "Product"]

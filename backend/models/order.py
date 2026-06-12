@@ -1,7 +1,6 @@
+from core.db import Base
 from sqlalchemy import Column, ForeignKey, Integer, Numeric
 from sqlalchemy.orm import relationship
-
-from . import Base
 
 
 class Order(Base):

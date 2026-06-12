@@ -1,6 +1,5 @@
+from core.db import Base
 from sqlalchemy import Column, Integer, String
-
-from . import Base
 
 
 class Customer(Base):
