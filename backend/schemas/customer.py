@@ -7,6 +7,10 @@ class CustomerBase(BaseModel):
     phone_no: int
 
 
+class CustomerCreate(CustomerBase):
+    pass
+
+
 class CustomerResponse(CustomerBase):
     id: int
     model_config = ConfigDict(from_attributes=True)
