@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -13,6 +13,7 @@ import { Trash2, Plus } from "lucide-react";
 import { customerService } from "@/services/customer_service";
 import type { Customer, CustomerCreate } from "@/types/customer";
 import { useCustomerStore } from "@/store/customer-store";
+import { useCustomers } from "@/hooks/use-customers";
 import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,18 +110,8 @@ function AddCustomerDialog({
 
 export default function CustomerPage() {
   const queryClient = useQueryClient();
-  const { customers, setCustomers, addCustomer, removeCustomer } =
-    useCustomerStore();
-
-  const { isLoading, isError } = useQuery({
-    queryKey: ["customers"],
-    queryFn: async () => {
-      const data = await customerService.getAllCustomers();
-      setCustomers(data);
-      return data;
-    },
-    retry: false,
-  });
+  const { addCustomer, removeCustomer } = useCustomerStore();
+  const { customers, isLoading, isError } = useCustomers();
 
   const addMutation = useMutation({
     mutationFn: customerService.createCustomer,

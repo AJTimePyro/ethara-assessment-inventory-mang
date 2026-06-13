@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -13,6 +13,7 @@ import { Trash2, Plus, Pencil } from "lucide-react";
 import { productService } from "@/services/product_service";
 import type { Product, ProductCreate, ProductUpdate } from "@/types/product";
 import { useProductStore } from "@/store/product-store";
+import { useProducts } from "@/hooks/use-products";
 import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -194,20 +195,10 @@ function EditProductDialog({
 
 export default function ProductPage() {
   const queryClient = useQueryClient();
-  const { products, setProducts, addProduct, updateProduct, removeProduct } =
-    useProductStore();
+  const { addProduct, updateProduct, removeProduct } = useProductStore();
+  const { products, isLoading, isError } = useProducts();
   const [editTarget, setEditTarget] = useState<Product | null>(null);
   const [editOpen, setEditOpen] = useState(false);
-
-  const { isLoading, isError } = useQuery({
-    queryKey: ["products"],
-    queryFn: async () => {
-      const data = await productService.getAllProducts();
-      setProducts(data);
-      return data;
-    },
-    retry: false,
-  });
 
   const addMutation = useMutation({
     mutationFn: productService.createProduct,
