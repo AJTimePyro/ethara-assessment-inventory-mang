@@ -16,9 +16,9 @@ export interface ProductUpdate {
   quantity?: number;
 }
 
-export interface ProductResponse extends ProductBase {
+export interface Product extends ProductBase {
   id: number;
 }
 
-export type ProductListResponse = ProductResponse[];
+export type ProductListResponse = Product[];
 export type ProductDeleteResponse = ApiMessageResponse;

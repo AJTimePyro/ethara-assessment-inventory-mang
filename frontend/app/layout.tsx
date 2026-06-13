@@ -4,6 +4,7 @@ import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { Providers } from "./providers";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -21,13 +22,15 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn("font-sans", geist.variable)}>
       <body>
-        <SidebarProvider>
-          <AppSidebar />
-          <main>
-            <SidebarTrigger />
-            {children}
-          </main>
-        </SidebarProvider>
+        <Providers>
+          <SidebarProvider>
+            <AppSidebar />
+            <main className="flex-1 min-w-0">
+              <SidebarTrigger />
+              {children}
+            </main>
+          </SidebarProvider>
+        </Providers>
       </body>
     </html>
   );

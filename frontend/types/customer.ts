@@ -8,9 +8,9 @@ interface CustomerBase {
 
 export type CustomerCreate = CustomerBase;
 
-export interface CustomerResponse extends CustomerBase {
+export interface Customer extends CustomerBase {
   id: number;
 }
 
-export type CustomerListResponse = CustomerResponse[];
+export type CustomerListResponse = Customer[];
 export type CustomerDeleteResponse = ApiMessageResponse;
