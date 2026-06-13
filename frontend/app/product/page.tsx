@@ -132,7 +132,7 @@ function AddProductDialog({ onAdd }: { onAdd: (data: ProductCreate) => void }) {
           <DialogTitle>Add Product</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
-          <ProductFormFields form={form} onChange={setForm} />
+          <ProductFormFields form={form} onChange={(f) => setForm(f)} />
           <DialogFooter>
             <Button type="submit">Save</Button>
           </DialogFooter>
@@ -153,7 +153,7 @@ function EditProductDialog({
   onOpenChange: (v: boolean) => void;
   onUpdate: (id: number, data: ProductUpdate) => void;
 }) {
-  const [form, setForm] = useState<ProductUpdate>(emptyForm);
+  const [form, setForm] = useState<ProductCreate>(emptyForm);
 
   function handleOpenChange(v: boolean) {
     if (v && product) {
@@ -170,7 +170,8 @@ function EditProductDialog({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!product) return;
-    onUpdate(product.id, form);
+    const payload: ProductUpdate = { ...form };
+    onUpdate(product.id, payload);
     onOpenChange(false);
   }
 
@@ -181,7 +182,7 @@ function EditProductDialog({
           <DialogTitle>Edit Product</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
-          <ProductFormFields form={form} onChange={setForm} />
+          <ProductFormFields form={form} onChange={(f) => setForm(f)} />
           <DialogFooter>
             <Button type="submit">Update</Button>
           </DialogFooter>

@@ -1,10 +1,10 @@
 import { create } from "zustand";
-import type { CustomerResponse } from "@/types/customer";
+import type { Customer } from "@/types/customer";
 
 interface CustomerStore {
-  customers: CustomerResponse[];
-  setCustomers: (customers: CustomerResponse[]) => void;
-  addCustomer: (customer: CustomerResponse) => void;
+  customers: Customer[];
+  setCustomers: (customers: Customer[]) => void;
+  addCustomer: (customer: Customer) => void;
   removeCustomer: (id: number) => void;
 }
 

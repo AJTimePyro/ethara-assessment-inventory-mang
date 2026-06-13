@@ -1,11 +1,11 @@
 import { create } from "zustand";
-import type { ProductResponse } from "@/types/product";
+import type { Product } from "@/types/product";
 
 interface ProductStore {
-  products: ProductResponse[];
-  setProducts: (products: ProductResponse[]) => void;
-  addProduct: (product: ProductResponse) => void;
-  updateProduct: (product: ProductResponse) => void;
+  products: Product[];
+  setProducts: (products: Product[]) => void;
+  addProduct: (product: Product) => void;
+  updateProduct: (product: Product) => void;
   removeProduct: (id: number) => void;
 }
 
