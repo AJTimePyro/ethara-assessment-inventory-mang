@@ -9,12 +9,12 @@ import {
 } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { Trash2, Plus } from "lucide-react";
-
 import { customerService } from "@/services/customer_service";
 import type { Customer, CustomerCreate } from "@/types/customer";
 import { useCustomerStore } from "@/store/customer-store";
 import { useCustomers } from "@/hooks/use-customers";
 import { DataTable } from "@/components/data-table";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -112,6 +112,7 @@ export default function CustomerPage() {
   const queryClient = useQueryClient();
   const { addCustomer, removeCustomer } = useCustomerStore();
   const { customers, isLoading, isError } = useCustomers();
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const addMutation = useMutation({
     mutationFn: customerService.createCustomer,
@@ -129,13 +130,17 @@ export default function CustomerPage() {
       removeCustomer(id);
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       toast.success("Customer deleted.");
+      setDeleteId(null);
     },
-    onError: () => toast.error("Failed to delete customer."),
+    onError: () => {
+      toast.error("Failed to delete customer.");
+      setDeleteId(null);
+    },
   });
 
   const table = useReactTable({
     data: customers,
-    columns: columns((id) => deleteMutation.mutate(id)),
+    columns: columns((id) => setDeleteId(id)),
     getCoreRowModel: getCoreRowModel(),
   });
 
@@ -150,6 +155,14 @@ export default function CustomerPage() {
         isLoading={isLoading}
         isError={isError}
         emptyMessage="No customers found."
+      />
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Delete Customer"
+        description="This will permanently delete the customer. This action cannot be undone."
+        onConfirm={() => deleteId !== null && deleteMutation.mutate(deleteId)}
+        loading={deleteMutation.isPending}
       />
     </div>
   );

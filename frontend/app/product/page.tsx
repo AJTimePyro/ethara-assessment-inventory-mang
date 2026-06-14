@@ -9,12 +9,12 @@ import {
 } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { Trash2, Plus, Pencil } from "lucide-react";
-
 import { productService } from "@/services/product_service";
 import type { Product, ProductCreate, ProductUpdate } from "@/types/product";
 import { useProductStore } from "@/store/product-store";
 import { useProducts } from "@/hooks/use-products";
 import { DataTable } from "@/components/data-table";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -154,16 +154,20 @@ function EditProductDialog({
   onOpenChange: (v: boolean) => void;
   onUpdate: (id: number, data: ProductUpdate) => void;
 }) {
-  const [form, setForm] = useState<ProductCreate>(emptyForm);
+  const [form, setForm] = useState<ProductCreate>(
+    product
+      ? {
+          sku_code: product.sku_code,
+          product_name: product.product_name,
+          price: product.price,
+          quantity: product.quantity,
+        }
+      : emptyForm,
+  );
 
   function handleOpenChange(v: boolean) {
-    if (v && product) {
-      setForm({
-        sku_code: product.sku_code,
-        product_name: product.product_name,
-        price: product.price,
-        quantity: product.quantity,
-      });
+    if (!v) {
+      setForm(emptyForm);
     }
     onOpenChange(v);
   }
@@ -199,6 +203,7 @@ export default function ProductPage() {
   const { products, isLoading, isError } = useProducts();
   const [editTarget, setEditTarget] = useState<Product | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const addMutation = useMutation({
     mutationFn: productService.createProduct,
@@ -227,8 +232,12 @@ export default function ProductPage() {
       removeProduct(id);
       queryClient.invalidateQueries({ queryKey: ["products"] });
       toast.success("Product deleted.");
+      setDeleteId(null);
     },
-    onError: () => toast.error("Failed to delete product."),
+    onError: () => {
+      toast.error("Failed to delete product.");
+      setDeleteId(null);
+    },
   });
 
   function handleEdit(product: Product) {
@@ -238,7 +247,7 @@ export default function ProductPage() {
 
   const table = useReactTable({
     data: products,
-    columns: columns(handleEdit, (id) => deleteMutation.mutate(id)),
+    columns: columns(handleEdit, (id) => setDeleteId(id)),
     getCoreRowModel: getCoreRowModel(),
   });
 
@@ -255,10 +264,19 @@ export default function ProductPage() {
         emptyMessage="No products found."
       />
       <EditProductDialog
+        key={`${editTarget?.id ?? "empty"}-${editOpen ? "open" : "closed"}`}
         product={editTarget}
         open={editOpen}
         onOpenChange={setEditOpen}
         onUpdate={(id, data) => updateMutation.mutate({ id, data })}
+      />
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Delete Product"
+        description="This will permanently delete the product. This action cannot be undone."
+        onConfirm={() => deleteId !== null && deleteMutation.mutate(deleteId)}
+        loading={deleteMutation.isPending}
       />
     </div>
   );

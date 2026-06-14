@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   type ColumnDef,
@@ -12,7 +12,7 @@ import {
 } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { Trash2, Plus, ChevronRight, X } from "lucide-react";
-
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { orderService } from "@/services/order_service";
 import type {
   OrderResponse,
@@ -214,6 +214,7 @@ export default function OrderPage() {
   const { customers } = useCustomers();
   const { products } = useProducts();
   const [expanded, setExpanded] = useState<ExpandedState>({});
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const { isLoading, isError } = useQuery({
     queryKey: ["orders"],
@@ -241,14 +242,18 @@ export default function OrderPage() {
       removeOrder(id);
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       toast.success("Order deleted.");
+      setDeleteId(null);
     },
-    onError: () => toast.error("Failed to delete order."),
+    onError: () => {
+      toast.error("Failed to delete order.");
+      setDeleteId(null);
+    },
   });
 
   const customerMap = new Map(customers.map((c) => [c.id, c.full_name]));
   const productMap = new Map(products.map((p) => [p.id, p.product_name]));
 
-  const cols = buildColumns(customerMap, (id) => deleteMutation.mutate(id));
+  const cols = buildColumns(customerMap, (id) => setDeleteId(id));
 
   const table = useReactTable({
     data: orders,
@@ -316,8 +321,8 @@ export default function OrderPage() {
               </TableRow>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <>
-                  <TableRow key={row.id}>
+                <Fragment key={row.id}>
+                  <TableRow>
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
                         {flexRender(
@@ -328,7 +333,7 @@ export default function OrderPage() {
                     ))}
                   </TableRow>
                   {row.getIsExpanded() && (
-                    <TableRow key={`${row.id}-detail`}>
+                    <TableRow>
                       <TableCell colSpan={colSpan} className="bg-muted/30 p-4">
                         <table className="w-full text-sm">
                           <thead>
@@ -360,12 +365,20 @@ export default function OrderPage() {
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </Fragment>
               ))
             )}
           </TableBody>
         </Table>
       </div>
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Delete Order"
+        description="This will permanently delete the order and restore product stock. This action cannot be undone."
+        onConfirm={() => deleteId !== null && deleteMutation.mutate(deleteId)}
+        loading={deleteMutation.isPending}
+      />
     </div>
   );
 }
