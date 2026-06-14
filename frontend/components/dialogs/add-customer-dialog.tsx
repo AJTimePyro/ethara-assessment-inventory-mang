@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,21 +19,35 @@ export function AddCustomerDialog({
   onAdd: (data: CustomerCreate) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [phoneVal, setPhoneVal] = useState("");
   const [form, setForm] = useState<CustomerCreate>({
     full_name: "",
     email: "",
     phone_no: 0,
   });
 
+  function handleOpenChange(v: boolean) {
+    if (!v) {
+      setForm({ full_name: "", email: "", phone_no: 0 });
+      setPhoneVal("");
+    }
+    setOpen(v);
+  }
+
   function handleSubmit(e: React.SubmitEvent) {
     e.preventDefault();
-    onAdd(form);
+    if (phoneVal.length !== 10) {
+      toast.error("Phone number must be exactly 10 digits.");
+      return;
+    }
+    onAdd({ ...form, phone_no: parseInt(phoneVal, 10) });
     setOpen(false);
     setForm({ full_name: "", email: "", phone_no: 0 });
+    setPhoneVal("");
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" /> Add Customer
@@ -70,16 +85,20 @@ export function AddCustomerDialog({
           </div>
           <div className="field-group">
             <label htmlFor="phone_no" className="field-label">
-              Phone Number
+              Phone Number (10 digits)
             </label>
             <Input
               id="phone_no"
               placeholder="e.g. 9876543210"
-              type="number"
-              value={form.phone_no || ""}
-              onChange={(e) =>
-                setForm({ ...form, phone_no: Number(e.target.value) })
-              }
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={phoneVal}
+              onChange={(e) => {
+                const clean = e.target.value.replace(/\D/g, "").slice(0, 10);
+                setPhoneVal(clean);
+                setForm({ ...form, phone_no: clean ? parseInt(clean, 10) : 0 });
+              }}
               required
             />
           </div>
@@ -87,7 +106,7 @@ export function AddCustomerDialog({
             <Button
               variant="outline"
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={() => handleOpenChange(false)}
             >
               Cancel
             </Button>

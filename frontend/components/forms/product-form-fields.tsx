@@ -41,11 +41,23 @@ export function ProductFormFields({
         <Input
           id="price"
           placeholder="0.00"
-          type="number"
-          step="0.01"
-          min="0"
+          type="text"
+          inputMode="decimal"
           value={form.price}
-          onChange={(e) => onChange({ ...form, price: e.target.value })}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val === "" || /^\d*\.?\d{0,2}$/.test(val)) {
+              onChange({ ...form, price: val });
+            }
+          }}
+          onBlur={() => {
+            const parsed = parseFloat(form.price);
+            if (isNaN(parsed)) {
+              onChange({ ...form, price: "" });
+            } else {
+              onChange({ ...form, price: parsed.toFixed(2) });
+            }
+          }}
           required
         />
       </div>
@@ -56,12 +68,14 @@ export function ProductFormFields({
         <Input
           id="quantity"
           placeholder="0"
-          type="number"
-          min="0"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           value={form.quantity || ""}
-          onChange={(e) =>
-            onChange({ ...form, quantity: Number(e.target.value) })
-          }
+          onChange={(e) => {
+            const clean = e.target.value.replace(/\D/g, "");
+            onChange({ ...form, quantity: clean ? parseInt(clean, 10) : 0 });
+          }}
           required
         />
       </div>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -61,6 +62,21 @@ export function AddOrderDialog({
   function handleSubmit(e: React.SubmitEvent) {
     e.preventDefault();
     if (!customerId || items.length === 0) return;
+
+    for (const item of items) {
+      if (item.quantity < 1) {
+        toast.error("All item quantities must be at least 1.");
+        return;
+      }
+      const product = products.find((p) => p.id === item.product_id);
+      if (product && item.quantity > product.quantity) {
+        toast.error(
+          `Quantity for "${product.product_name}" exceeds available stock (${product.quantity}).`,
+        );
+        return;
+      }
+    }
+
     const submissionItems = items.map((item) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { localId, ...rest } = item;
@@ -147,15 +163,16 @@ export function AddOrderDialog({
                       </SelectContent>
                     </Select>
                     <Input
-                      type="number"
-                      min="1"
-                      max={product?.quantity}
-                      value={item.quantity}
-                      onChange={(e) =>
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={item.quantity || ""}
+                      onChange={(e) => {
+                        const clean = e.target.value.replace(/\D/g, "");
                         updateItem(item.localId, {
-                          quantity: Number(e.target.value),
-                        })
-                      }
+                          quantity: clean ? parseInt(clean, 10) : 0,
+                        });
+                      }}
                       className={`w-20 ${
                         isOverStock
                           ? "border-destructive text-destructive focus-visible:ring-destructive"

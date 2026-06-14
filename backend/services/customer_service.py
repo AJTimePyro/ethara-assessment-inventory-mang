@@ -1,5 +1,7 @@
 from fastapi import HTTPException
 from models.customer import Customer
+from models.order import Order
+from models.product import Product
 from schemas.customer import CustomerCreate
 from sqlalchemy.orm import Session
 
@@ -19,9 +21,25 @@ class CustomerService:
 
     def delete_customer(self, customer_id: int):
         customer = self.get_customer_by_id(customer_id)
+
+        # Cascade delete orders and restore product quantities
+        orders = self._db.query(Order).filter(Order.customer_id == customer_id).all()
+        for order in orders:
+            for item in order.items:
+                product = (
+                    self._db.query(Product)
+                    .filter(Product.id == item.product_id)
+                    .with_for_update()
+                    .first()
+                )
+                if product:
+                    product.quantity += item.quantity
+                self._db.delete(item)
+            self._db.delete(order)
+
         self._db.delete(customer)
         self._db.commit()
-        return {"message": "Customer deleted successfully"}
+        return {"message": "Customer and associated orders deleted successfully"}
 
     def create_customer(self, customer_data: CustomerCreate):
         if len(str(customer_data.phone_no)) != 10:
