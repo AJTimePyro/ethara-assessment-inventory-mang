@@ -60,10 +60,17 @@ export function EditProductDialog({
         <DialogHeader>
           <DialogTitle>Edit Product</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <ProductFormFields form={form} onChange={(f) => setForm(f)} />
           <DialogFooter>
-            <Button type="submit">Update</Button>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit">Update Product</Button>
           </DialogFooter>
         </form>
       </DialogContent>

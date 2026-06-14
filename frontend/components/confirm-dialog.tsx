@@ -1,3 +1,4 @@
+import { AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -29,10 +30,17 @@ export function ConfirmDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+            </div>
+            <div className="space-y-1">
+              <DialogTitle>{title}</DialogTitle>
+              <DialogDescription>{description}</DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
-        <DialogFooter>
+        <DialogFooter className="mt-2">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
@@ -40,7 +48,12 @@ export function ConfirmDialog({
           >
             Cancel
           </Button>
-          <Button variant="destructive" onClick={onConfirm} disabled={loading}>
+          <Button
+            variant="destructive"
+            onClick={onConfirm}
+            disabled={loading}
+            className="bg-red-500 text-white hover:bg-red-600 active:scale-[0.98]"
+          >
             {loading ? "Deleting…" : "Delete"}
           </Button>
         </DialogFooter>

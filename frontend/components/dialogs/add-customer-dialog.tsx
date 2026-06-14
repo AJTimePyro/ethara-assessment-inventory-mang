@@ -42,31 +42,56 @@ export function AddCustomerDialog({
         <DialogHeader>
           <DialogTitle>Add Customer</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <Input
-            placeholder="Full Name"
-            value={form.full_name}
-            onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-            required
-          />
-          <Input
-            placeholder="Email"
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            required
-          />
-          <Input
-            placeholder="Phone Number"
-            type="number"
-            value={form.phone_no || ""}
-            onChange={(e) =>
-              setForm({ ...form, phone_no: Number(e.target.value) })
-            }
-            required
-          />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="field-group">
+            <label htmlFor="full_name" className="field-label">
+              Full Name
+            </label>
+            <Input
+              id="full_name"
+              placeholder="e.g. Abhijeet"
+              value={form.full_name}
+              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+              required
+            />
+          </div>
+          <div className="field-group">
+            <label htmlFor="email" className="field-label">
+              Email Address
+            </label>
+            <Input
+              id="email"
+              placeholder="e.g. abhijeet@example.com"
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              required
+            />
+          </div>
+          <div className="field-group">
+            <label htmlFor="phone_no" className="field-label">
+              Phone Number
+            </label>
+            <Input
+              id="phone_no"
+              placeholder="e.g. 9876543210"
+              type="number"
+              value={form.phone_no || ""}
+              onChange={(e) =>
+                setForm({ ...form, phone_no: Number(e.target.value) })
+              }
+              required
+            />
+          </div>
           <DialogFooter>
-            <Button type="submit">Save</Button>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit">Save Customer</Button>
           </DialogFooter>
         </form>
       </DialogContent>

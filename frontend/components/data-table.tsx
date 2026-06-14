@@ -2,6 +2,7 @@
 
 import { flexRender, type Table as TanstackTable } from "@tanstack/react-table";
 import { ErrorState, type ErrorStateProps } from "@/components/error-state";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -30,7 +31,7 @@ export function DataTable<T>({
   const colSpan = table.getAllColumns().length;
 
   return (
-    <div className="rounded-md border w-full">
+    <div className="table-container">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((hg) => (
@@ -50,14 +51,15 @@ export function DataTable<T>({
         </TableHeader>
         <TableBody>
           {isLoading ? (
-            <TableRow>
-              <TableCell
-                colSpan={colSpan}
-                className="text-center py-8 text-muted-foreground"
-              >
-                Loading…
-              </TableCell>
-            </TableRow>
+            Array.from({ length: 5 }).map((_, i) => (
+              <TableRow key={i}>
+                {Array.from({ length: colSpan }).map((_, j) => (
+                  <TableCell key={j}>
+                    <Skeleton className="h-4 w-full max-w-45" />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
           ) : isError ? (
             <TableRow>
               <TableCell colSpan={colSpan}>
@@ -68,7 +70,7 @@ export function DataTable<T>({
             <TableRow>
               <TableCell
                 colSpan={colSpan}
-                className="text-center py-8 text-muted-foreground"
+                className="text-center py-12 text-muted-foreground text-sm"
               >
                 {emptyMessage}
               </TableCell>

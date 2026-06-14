@@ -91,9 +91,14 @@ export default function CustomerPage() {
   });
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Customers</h1>
+    <div className="page-container">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Customers</h1>
+          <p className="page-subtitle">
+            View and manage your customer directory.
+          </p>
+        </div>
         <AddCustomerDialog onAdd={(data) => addMutation.mutate(data)} />
       </div>
       <DataTable

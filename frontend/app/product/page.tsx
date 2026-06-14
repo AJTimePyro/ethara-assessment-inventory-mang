@@ -136,9 +136,14 @@ export default function ProductPage() {
   });
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Products</h1>
+    <div className="page-container">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Products</h1>
+          <p className="page-subtitle">
+            Manage your product catalog, stock, and pricing.
+          </p>
+        </div>
         <AddProductDialog onAdd={(data) => addMutation.mutate(data)} />
       </div>
       <DataTable

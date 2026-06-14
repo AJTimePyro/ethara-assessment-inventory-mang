@@ -28,13 +28,31 @@ export function ErrorState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground",
+        "flex flex-col items-center justify-center gap-3 py-14",
         className,
       )}
     >
-      <Icon className={cn("h-8 w-8", iconClassName)} />
-      <p className={cn("text-sm font-medium", titleClassName)}>{title}</p>
-      <p className={cn("text-xs", descriptionClassName)}>{description}</p>
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+        <Icon className={cn("h-7 w-7 text-red-400", iconClassName)} />
+      </div>
+      <div className="text-center">
+        <p
+          className={cn(
+            "text-sm font-semibold text-foreground",
+            titleClassName,
+          )}
+        >
+          {title}
+        </p>
+        <p
+          className={cn(
+            "mt-1 text-xs text-muted-foreground",
+            descriptionClassName,
+          )}
+        >
+          {description}
+        </p>
+      </div>
     </div>
   );
 }

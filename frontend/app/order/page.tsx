@@ -203,13 +203,16 @@ export default function OrderPage() {
   const colSpan = cols.length;
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Orders</h1>
+    <div className="page-container">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Orders</h1>
+          <p className="page-subtitle">Track and manage all customer orders.</p>
+        </div>
         <AddOrderDialog onAdd={(data) => addMutation.mutate(data)} />
       </div>
 
-      <div className="rounded-md border w-full">
+      <div className="table-container">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
@@ -229,14 +232,15 @@ export default function OrderPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={colSpan}
-                  className="text-center py-8 text-muted-foreground"
-                >
-                  Loading…
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: colSpan }).map((_, j) => (
+                    <TableCell key={j}>
+                      <div className="h-4 animate-pulse rounded bg-slate-200/80" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : isError ? (
               <TableRow>
                 <TableCell colSpan={colSpan}>
@@ -250,7 +254,7 @@ export default function OrderPage() {
               <TableRow>
                 <TableCell
                   colSpan={colSpan}
-                  className="text-center py-8 text-muted-foreground"
+                  className="text-center py-12 text-muted-foreground text-sm"
                 >
                   No orders found.
                 </TableCell>
@@ -270,34 +274,49 @@ export default function OrderPage() {
                   </TableRow>
                   {row.getIsExpanded() && (
                     <TableRow>
-                      <TableCell colSpan={colSpan} className="bg-muted/30 p-4">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="text-muted-foreground">
-                              <th className="text-left font-medium pb-1">
-                                Product
-                              </th>
-                              <th className="text-left font-medium pb-1">
-                                Qty
-                              </th>
-                              <th className="text-left font-medium pb-1">
-                                Price
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {row.original.items.map((item) => (
-                              <tr key={item.id}>
-                                <td>
-                                  {productMap.get(item.product_id) ??
-                                    `#${item.product_id}`}
-                                </td>
-                                <td>{item.quantity}</td>
-                                <td>{item.purchased_price}</td>
+                      <TableCell
+                        colSpan={colSpan}
+                        className="bg-indigo-50/40 p-0"
+                      >
+                        <div className="px-6 py-4">
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                            Order Items
+                          </p>
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b border-slate-200">
+                                <th className="pb-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                  Product
+                                </th>
+                                <th className="pb-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                  Qty
+                                </th>
+                                <th className="pb-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                  Unit Price
+                                </th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody>
+                              {row.original.items.map((item) => (
+                                <tr
+                                  key={item.id}
+                                  className="border-b border-slate-100 last:border-0"
+                                >
+                                  <td className="py-2 font-medium">
+                                    {productMap.get(item.product_id) ??
+                                      `#${item.product_id}`}
+                                  </td>
+                                  <td className="py-2 text-slate-600">
+                                    {item.quantity}
+                                  </td>
+                                  <td className="py-2 text-slate-600">
+                                    ${item.purchased_price}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}

@@ -21,14 +21,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn("font-sans", geist.variable)}>
-      <body>
+      <body className="min-h-screen bg-background">
         <Providers>
           <SidebarProvider>
             <AppSidebar />
-            <main className="flex-1 min-w-0">
-              <SidebarTrigger />
-              {children}
-            </main>
+            <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+              {/* Top bar */}
+              <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background/95 backdrop-blur-sm px-4">
+                <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors" />
+                <div className="h-5 w-px bg-border" />
+                <span className="text-sm font-medium text-muted-foreground">
+                  Ethara Inventory
+                </span>
+              </header>
+              {/* Page content */}
+              <main className="flex-1 overflow-y-auto">{children}</main>
+            </div>
           </SidebarProvider>
         </Providers>
       </body>

@@ -85,22 +85,27 @@ export function AddOrderDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Customer select */}
-          <Select value={customerId} onValueChange={setCustomerId} required>
-            <SelectTrigger>
-              <SelectValue placeholder="Select customer" />
-            </SelectTrigger>
-            <SelectContent>
-              {customers.map((c) => (
-                <SelectItem key={c.id} value={String(c.id)}>
-                  {c.full_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="field-group">
+            <label htmlFor="customer_select" className="field-label">
+              Customer
+            </label>
+            <Select value={customerId} onValueChange={setCustomerId} required>
+              <SelectTrigger id="customer_select">
+                <SelectValue placeholder="Select customer" />
+              </SelectTrigger>
+              <SelectContent>
+                {customers.map((c) => (
+                  <SelectItem key={c.id} value={String(c.id)}>
+                    {c.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Items */}
           <div className="space-y-2">
-            <p className="text-sm font-medium">Items</p>
+            <p className="field-label">Order Items</p>
             {items.map((item) => {
               const product = products.find((p) => p.id === item.product_id);
               const isOverStock = product
@@ -190,6 +195,13 @@ export function AddOrderDialog({
           </div>
 
           <DialogFooter>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
             <Button
               type="submit"
               disabled={
