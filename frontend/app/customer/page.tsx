@@ -143,6 +143,7 @@ export default function CustomerPage() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
     onSuccess: () => {
       toast.success("Customer added successfully.");
@@ -172,6 +173,7 @@ export default function CustomerPage() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
     onSuccess: () => {
       toast.success("Customer deleted.");

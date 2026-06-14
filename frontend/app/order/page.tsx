@@ -20,6 +20,8 @@ import type {
   OrderItemCreate,
 } from "@/types/order";
 import { useOrderStore } from "@/store/order-store";
+import { useProductStore } from "@/store/product-store";
+import type { Product } from "@/types/product";
 import { useCustomers } from "@/hooks/use-customers";
 import { useProducts } from "@/hooks/use-products";
 import { Button } from "@/components/ui/button";
@@ -99,30 +101,48 @@ const buildColumns = (
   },
 ];
 
+interface LocalOrderItem extends OrderItemCreate {
+  localId: string;
+}
+
 function AddOrderDialog({ onAdd }: { onAdd: (data: OrderCreate) => void }) {
   const { customers } = useCustomers();
   const { products } = useProducts();
 
   const [open, setOpen] = useState(false);
   const [customerId, setCustomerId] = useState<string>("");
-  const [items, setItems] = useState<OrderItemCreate[]>([]);
+  const [items, setItems] = useState<LocalOrderItem[]>([]);
+
+  const selectedProductIds = items
+    .map((item) => item.product_id)
+    .filter((id) => id > 0);
 
   function addItem() {
-    setItems([...items, { product_id: 0, quantity: 1 }]);
+    setItems([
+      ...items,
+      { localId: Math.random().toString(), product_id: 0, quantity: 1 },
+    ]);
   }
 
-  function updateItem(index: number, patch: Partial<OrderItemCreate>) {
-    setItems(items.map((it, i) => (i === index ? { ...it, ...patch } : it)));
+  function updateItem(localId: string, patch: Partial<OrderItemCreate>) {
+    setItems(
+      items.map((it) => (it.localId === localId ? { ...it, ...patch } : it)),
+    );
   }
 
-  function removeItem(index: number) {
-    setItems(items.filter((_, i) => i !== index));
+  function removeItem(localId: string) {
+    setItems(items.filter((it) => it.localId !== localId));
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!customerId || items.length === 0) return;
-    onAdd({ customer_id: Number(customerId), items });
+    const submissionItems = items.map((item) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { localId, ...rest } = item;
+      return rest;
+    });
+    onAdd({ customer_id: Number(customerId), items: submissionItems });
     setOpen(false);
     setCustomerId("");
     setItems([]);
@@ -157,53 +177,108 @@ function AddOrderDialog({ onAdd }: { onAdd: (data: OrderCreate) => void }) {
           {/* Items */}
           <div className="space-y-2">
             <p className="text-sm font-medium">Items</p>
-            {items.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <Select
-                  value={item.product_id ? String(item.product_id) : ""}
-                  onValueChange={(v) =>
-                    updateItem(idx, { product_id: Number(v) })
-                  }
-                  required
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Select product" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products.map((p) => (
-                      <SelectItem key={p.id} value={String(p.id)}>
-                        {p.product_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  type="number"
-                  min="1"
-                  value={item.quantity}
-                  onChange={(e) =>
-                    updateItem(idx, { quantity: Number(e.target.value) })
-                  }
-                  className="w-20"
-                  required
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeItem(idx)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-            <Button type="button" variant="outline" size="sm" onClick={addItem}>
+            {items.map((item) => {
+              const product = products.find((p) => p.id === item.product_id);
+              const isOverStock = product
+                ? item.quantity > product.quantity
+                : false;
+
+              return (
+                <div key={item.localId} className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={item.product_id ? String(item.product_id) : ""}
+                      onValueChange={(v) =>
+                        updateItem(item.localId, { product_id: Number(v) })
+                      }
+                      required
+                    >
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Select product" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {products
+                          .filter(
+                            (p) =>
+                              p.id === item.product_id ||
+                              !selectedProductIds.includes(p.id),
+                          )
+                          .map((p) => (
+                            <SelectItem
+                              key={p.id}
+                              value={String(p.id)}
+                              disabled={p.quantity <= 0}
+                            >
+                              {p.product_name}{" "}
+                              {p.quantity <= 0
+                                ? "(Out of Stock)"
+                                : `(Stock: ${p.quantity})`}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="number"
+                      min="1"
+                      max={product?.quantity}
+                      value={item.quantity}
+                      onChange={(e) =>
+                        updateItem(item.localId, {
+                          quantity: Number(e.target.value),
+                        })
+                      }
+                      className={`w-20 ${
+                        isOverStock
+                          ? "border-destructive text-destructive focus-visible:ring-destructive"
+                          : ""
+                      }`}
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeItem(item.localId)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {isOverStock && product && (
+                    <p className="text-xs text-destructive font-medium">
+                      Max available stock: {product.quantity}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addItem}
+              disabled={
+                items.some((item) => !item.product_id) ||
+                items.length >= products.length
+              }
+            >
               <Plus className="mr-1 h-3 w-3" /> Add Item
             </Button>
           </div>
 
           <DialogFooter>
-            <Button type="submit" disabled={!customerId || items.length === 0}>
+            <Button
+              type="submit"
+              disabled={
+                !customerId ||
+                items.length === 0 ||
+                items.some((item) => {
+                  const product = products.find(
+                    (p) => p.id === item.product_id,
+                  );
+                  return product ? item.quantity > product.quantity : false;
+                })
+              }
+            >
               Create
             </Button>
           </DialogFooter>
@@ -242,13 +317,21 @@ export default function OrderPage() {
     mutationFn: orderService.createOrder,
     onMutate: async (newOrder) => {
       await queryClient.cancelQueries({ queryKey: ["orders"] });
-      const previous =
+      await queryClient.cancelQueries({ queryKey: ["products"] });
+
+      const previousOrders =
         queryClient.getQueryData<OrderResponse[]>(["orders"]) ?? orders;
+      const previousProducts =
+        queryClient.getQueryData<Product[]>(["products"]) ??
+        useProductStore.getState().products;
+
       const mockOrder: OrderResponse = {
         id: Math.random() * -1,
         customer_id: newOrder.customer_id,
         items: newOrder.items.map((item) => {
-          const product = products.find((p) => p.id === item.product_id);
+          const product = previousProducts.find(
+            (p) => p.id === item.product_id,
+          );
           return {
             id: Math.random() * -1,
             product_id: item.product_id,
@@ -257,22 +340,45 @@ export default function OrderPage() {
           };
         }),
       };
+
       queryClient.setQueryData<OrderResponse[]>(["orders"], (old) => [
         ...(old ?? []),
         mockOrder,
       ]);
       addOrder(mockOrder);
-      return { previous };
+
+      const updatedProducts = previousProducts.map((p) => {
+        const orderItem = newOrder.items.find(
+          (item) => item.product_id === p.id,
+        );
+        if (orderItem) {
+          return {
+            ...p,
+            quantity: Math.max(0, p.quantity - orderItem.quantity),
+          };
+        }
+        return p;
+      });
+      queryClient.setQueryData<Product[]>(["products"], updatedProducts);
+      useProductStore.getState().setProducts(updatedProducts);
+
+      return { previousOrders, previousProducts };
     },
     onError: (err, newOrder, context) => {
       toast.error("Failed to create order.");
-      if (context?.previous) {
-        queryClient.setQueryData(["orders"], context.previous);
-        setOrders(context.previous);
+      if (context?.previousOrders) {
+        queryClient.setQueryData(["orders"], context.previousOrders);
+        setOrders(context.previousOrders);
+      }
+      if (context?.previousProducts) {
+        queryClient.setQueryData(["products"], context.previousProducts);
+        useProductStore.getState().setProducts(context.previousProducts);
       }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
     onSuccess: () => {
       toast.success("Order created.");
@@ -283,25 +389,55 @@ export default function OrderPage() {
     mutationFn: orderService.deleteOrder,
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["orders"] });
-      const previous =
+      await queryClient.cancelQueries({ queryKey: ["products"] });
+
+      const previousOrders =
         queryClient.getQueryData<OrderResponse[]>(["orders"]) ?? orders;
+      const previousProducts =
+        queryClient.getQueryData<Product[]>(["products"]) ??
+        useProductStore.getState().products;
+
+      const orderToDelete = previousOrders.find((o) => o.id === id);
+
       queryClient.setQueryData<OrderResponse[]>(["orders"], (old) =>
         (old ?? []).filter((o) => o.id !== id),
       );
       removeOrder(id);
       setDeleteId(null);
-      return { previous };
+
+      let updatedProducts = previousProducts;
+      if (orderToDelete) {
+        updatedProducts = previousProducts.map((p) => {
+          const orderItem = orderToDelete.items.find(
+            (item) => item.product_id === p.id,
+          );
+          if (orderItem) {
+            return { ...p, quantity: p.quantity + orderItem.quantity };
+          }
+          return p;
+        });
+        queryClient.setQueryData<Product[]>(["products"], updatedProducts);
+        useProductStore.getState().setProducts(updatedProducts);
+      }
+
+      return { previousOrders, previousProducts };
     },
     onError: (err, id, context) => {
       toast.error("Failed to delete order.");
-      if (context?.previous) {
-        queryClient.setQueryData(["orders"], context.previous);
-        setOrders(context.previous);
+      if (context?.previousOrders) {
+        queryClient.setQueryData(["orders"], context.previousOrders);
+        setOrders(context.previousOrders);
+      }
+      if (context?.previousProducts) {
+        queryClient.setQueryData(["products"], context.previousProducts);
+        useProductStore.getState().setProducts(context.previousProducts);
       }
       setDeleteId(null);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
     onSuccess: () => {
       toast.success("Order deleted.");

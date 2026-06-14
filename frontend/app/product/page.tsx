@@ -236,6 +236,7 @@ export default function ProductPage() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
     onSuccess: () => {
       toast.success("Product added successfully.");
@@ -268,6 +269,7 @@ export default function ProductPage() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
     onSuccess: () => {
       toast.success("Product updated.");
@@ -297,6 +299,7 @@ export default function ProductPage() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
     onSuccess: () => {
       toast.success("Product deleted.");
