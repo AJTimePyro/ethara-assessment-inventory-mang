@@ -37,7 +37,11 @@ const columns = (
   onEdit: (product: Product) => void,
   onDelete: (id: number) => void,
 ): ColumnDef<Product>[] => [
-  { accessorKey: "id", header: "ID" },
+  {
+    accessorKey: "id",
+    header: "ID",
+    cell: ({ row }) => (row.original.id < 0 ? "" : row.original.id),
+  },
   { accessorKey: "sku_code", header: "SKU" },
   { accessorKey: "product_name", header: "Product Name" },
   { accessorKey: "price", header: "Price" },
@@ -51,6 +55,7 @@ const columns = (
           variant="ghost"
           size="icon"
           onClick={() => onEdit(row.original)}
+          disabled={row.original.id < 0}
         >
           <Pencil className="h-4 w-4" />
         </Button>
@@ -58,6 +63,7 @@ const columns = (
           variant="ghost"
           size="icon"
           onClick={() => onDelete(row.original.id)}
+          disabled={row.original.id < 0}
         >
           <Trash2 className="h-4 w-4 text-destructive" />
         </Button>
@@ -199,7 +205,8 @@ function EditProductDialog({
 
 export default function ProductPage() {
   const queryClient = useQueryClient();
-  const { addProduct, updateProduct, removeProduct } = useProductStore();
+  const { addProduct, updateProduct, removeProduct, setProducts } =
+    useProductStore();
   const { products, isLoading, isError } = useProducts();
   const [editTarget, setEditTarget] = useState<Product | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -207,36 +214,91 @@ export default function ProductPage() {
 
   const addMutation = useMutation({
     mutationFn: productService.createProduct,
-    onSuccess: (newProduct) => {
-      addProduct(newProduct);
+    onMutate: async (newProduct) => {
+      await queryClient.cancelQueries({ queryKey: ["products"] });
+      const previous =
+        queryClient.getQueryData<Product[]>(["products"]) ?? products;
+      const optimistic = { ...newProduct, id: Math.random() * -1 } as Product;
+      queryClient.setQueryData<Product[]>(["products"], (old) => [
+        ...(old ?? []),
+        optimistic,
+      ]);
+      addProduct(optimistic);
+      return { previous };
+    },
+    onError: (err, newProduct, context) => {
+      toast.error("Failed to add product.");
+      if (context?.previous) {
+        queryClient.setQueryData(["products"], context.previous);
+        setProducts(context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+    onSuccess: () => {
       toast.success("Product added successfully.");
     },
-    onError: () => toast.error("Failed to add product."),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: ProductUpdate }) =>
       productService.updateProduct(id, data),
-    onSuccess: (updatedProduct) => {
-      updateProduct(updatedProduct);
+    onMutate: async ({ id, data }) => {
+      queryClient.cancelQueries({ queryKey: ["products"] });
+      const previous =
+        queryClient.getQueryData<Product[]>(["products"]) ?? products;
+      const optimistic = previous.map((p) =>
+        p.id === id ? ({ ...p, ...data } as Product) : p,
+      );
+      queryClient.setQueryData<Product[]>(["products"], optimistic);
+      updateProduct({
+        ...(previous.find((p) => p.id === id) ?? ({} as Product)),
+        ...data,
+      } as Product);
+      return { previous };
+    },
+    onError: (err, variables, context) => {
+      toast.error("Failed to update product.");
+      if (context?.previous) {
+        queryClient.setQueryData(["products"], context.previous);
+        setProducts(context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+    onSuccess: () => {
       toast.success("Product updated.");
     },
-    onError: () => toast.error("Failed to update product."),
   });
 
   const deleteMutation = useMutation({
     mutationFn: productService.deleteProduct,
-    onSuccess: (_, id) => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["products"] });
+      const previous =
+        queryClient.getQueryData<Product[]>(["products"]) ?? products;
+      queryClient.setQueryData<Product[]>(["products"], (old) =>
+        (old ?? []).filter((p) => p.id !== id),
+      );
       removeProduct(id);
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast.success("Product deleted.");
+      setDeleteId(null);
+      return { previous };
+    },
+    onError: (err, id, context) => {
+      toast.error("Failed to delete product.");
+      if (context?.previous) {
+        queryClient.setQueryData(["products"], context.previous);
+        setProducts(context.previous);
+      }
       setDeleteId(null);
     },
-    onError: () => {
-      toast.error("Failed to delete product.");
-      setDeleteId(null);
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+    onSuccess: () => {
+      toast.success("Product deleted.");
     },
   });
 

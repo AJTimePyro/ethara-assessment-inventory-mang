@@ -66,7 +66,11 @@ const buildColumns = (
       </Button>
     ),
   },
-  { accessorKey: "id", header: "Order ID" },
+  {
+    accessorKey: "id",
+    header: "Order ID",
+    cell: ({ row }) => (row.original.id < 0 ? "" : row.original.id),
+  },
   {
     accessorKey: "customer_id",
     header: "Customer",
@@ -87,6 +91,7 @@ const buildColumns = (
         variant="ghost"
         size="icon"
         onClick={() => onDelete(row.original.id)}
+        disabled={row.original.id < 0}
       >
         <Trash2 className="h-4 w-4 text-destructive" />
       </Button>
@@ -216,7 +221,11 @@ export default function OrderPage() {
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  const { isLoading, isError } = useQuery({
+  const {
+    data: queryOrders,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["orders"],
     queryFn: async () => {
       const data = await orderService.getAllOrders();
@@ -226,27 +235,76 @@ export default function OrderPage() {
     retry: false,
   });
 
+  // query.data is reactive to setQueryData, so optimistic writes show instantly.
+  const displayOrders = queryOrders ?? orders;
+
   const addMutation = useMutation({
     mutationFn: orderService.createOrder,
-    onSuccess: (newOrder) => {
-      addOrder(newOrder);
+    onMutate: async (newOrder) => {
+      await queryClient.cancelQueries({ queryKey: ["orders"] });
+      const previous =
+        queryClient.getQueryData<OrderResponse[]>(["orders"]) ?? orders;
+      const mockOrder: OrderResponse = {
+        id: Math.random() * -1,
+        customer_id: newOrder.customer_id,
+        items: newOrder.items.map((item) => {
+          const product = products.find((p) => p.id === item.product_id);
+          return {
+            id: Math.random() * -1,
+            product_id: item.product_id,
+            quantity: item.quantity,
+            purchased_price: product ? String(product.price) : "0",
+          };
+        }),
+      };
+      queryClient.setQueryData<OrderResponse[]>(["orders"], (old) => [
+        ...(old ?? []),
+        mockOrder,
+      ]);
+      addOrder(mockOrder);
+      return { previous };
+    },
+    onError: (err, newOrder, context) => {
+      toast.error("Failed to create order.");
+      if (context?.previous) {
+        queryClient.setQueryData(["orders"], context.previous);
+        setOrders(context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+    onSuccess: () => {
       toast.success("Order created.");
     },
-    onError: () => toast.error("Failed to create order."),
   });
 
   const deleteMutation = useMutation({
     mutationFn: orderService.deleteOrder,
-    onSuccess: (_, id) => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["orders"] });
+      const previous =
+        queryClient.getQueryData<OrderResponse[]>(["orders"]) ?? orders;
+      queryClient.setQueryData<OrderResponse[]>(["orders"], (old) =>
+        (old ?? []).filter((o) => o.id !== id),
+      );
       removeOrder(id);
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-      toast.success("Order deleted.");
+      setDeleteId(null);
+      return { previous };
+    },
+    onError: (err, id, context) => {
+      toast.error("Failed to delete order.");
+      if (context?.previous) {
+        queryClient.setQueryData(["orders"], context.previous);
+        setOrders(context.previous);
+      }
       setDeleteId(null);
     },
-    onError: () => {
-      toast.error("Failed to delete order.");
-      setDeleteId(null);
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+    onSuccess: () => {
+      toast.success("Order deleted.");
     },
   });
 
@@ -256,7 +314,7 @@ export default function OrderPage() {
   const cols = buildColumns(customerMap, (id) => setDeleteId(id));
 
   const table = useReactTable({
-    data: orders,
+    data: displayOrders,
     columns: cols,
     state: { expanded },
     onExpandedChange: setExpanded,

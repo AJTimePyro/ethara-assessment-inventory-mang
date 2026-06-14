@@ -27,7 +27,11 @@ import {
 } from "@/components/ui/dialog";
 
 const columns = (onDelete: (id: number) => void): ColumnDef<Customer>[] => [
-  { accessorKey: "id", header: "ID" },
+  {
+    accessorKey: "id",
+    header: "ID",
+    cell: ({ row }) => (row.original.id < 0 ? "" : row.original.id),
+  },
   { accessorKey: "full_name", header: "Full Name" },
   { accessorKey: "email", header: "Email" },
   { accessorKey: "phone_no", header: "Phone" },
@@ -39,6 +43,7 @@ const columns = (onDelete: (id: number) => void): ColumnDef<Customer>[] => [
         variant="ghost"
         size="icon"
         onClick={() => onDelete(row.original.id)}
+        disabled={row.original.id < 0}
       >
         <Trash2 className="h-4 w-4 text-destructive" />
       </Button>
@@ -110,31 +115,65 @@ function AddCustomerDialog({
 
 export default function CustomerPage() {
   const queryClient = useQueryClient();
-  const { addCustomer, removeCustomer } = useCustomerStore();
+  const { addCustomer, removeCustomer, setCustomers } = useCustomerStore();
   const { customers, isLoading, isError } = useCustomers();
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const addMutation = useMutation({
     mutationFn: customerService.createCustomer,
-    onSuccess: (newCustomer) => {
-      addCustomer(newCustomer);
+    onMutate: async (newCustomer) => {
+      await queryClient.cancelQueries({ queryKey: ["customers"] });
+      const previous =
+        queryClient.getQueryData<Customer[]>(["customers"]) ?? customers;
+      const optimistic = { ...newCustomer, id: Math.random() * -1 } as Customer;
+      queryClient.setQueryData<Customer[]>(["customers"], (old) => [
+        ...(old ?? []),
+        optimistic,
+      ]);
+      addCustomer(optimistic);
+      return { previous };
+    },
+    onError: (err, newCustomer, context) => {
+      toast.error("Failed to add customer.");
+      if (context?.previous) {
+        queryClient.setQueryData(["customers"], context.previous);
+        setCustomers(context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
+    },
+    onSuccess: () => {
       toast.success("Customer added successfully.");
     },
-    onError: () => toast.error("Failed to add customer."),
   });
 
   const deleteMutation = useMutation({
     mutationFn: customerService.deleteCustomer,
-    onSuccess: (_, id) => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["customers"] });
+      const previous =
+        queryClient.getQueryData<Customer[]>(["customers"]) ?? customers;
+      queryClient.setQueryData<Customer[]>(["customers"], (old) =>
+        (old ?? []).filter((c) => c.id !== id),
+      );
       removeCustomer(id);
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
-      toast.success("Customer deleted.");
+      setDeleteId(null);
+      return { previous };
+    },
+    onError: (err, id, context) => {
+      toast.error("Failed to delete customer.");
+      if (context?.previous) {
+        queryClient.setQueryData(["customers"], context.previous);
+        setCustomers(context.previous);
+      }
       setDeleteId(null);
     },
-    onError: () => {
-      toast.error("Failed to delete customer.");
-      setDeleteId(null);
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+    },
+    onSuccess: () => {
+      toast.success("Customer deleted.");
     },
   });
 

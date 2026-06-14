@@ -3,7 +3,7 @@ import { customerService } from "@/services/customer_service";
 import { useCustomerStore } from "@/store/customer-store";
 
 export function useCustomers() {
-  const { customers, setCustomers } = useCustomerStore();
+  const { setCustomers } = useCustomerStore();
 
   const query = useQuery({
     queryKey: ["customers"],
@@ -15,5 +15,7 @@ export function useCustomers() {
     retry: false,
   });
 
-  return { customers, ...query };
+  // query.data is reactive to both query fetches AND queryClient.setQueryData() calls,
+  // so optimistic writes are immediately visible without a stale getQueryData() read.
+  return { customers: query.data ?? [], ...query };
 }
