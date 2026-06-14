@@ -1,7 +1,7 @@
 "use client";
 
 import { flexRender, type Table as TanstackTable } from "@tanstack/react-table";
-import { WifiOff } from "lucide-react";
+import { ErrorState, type ErrorStateProps } from "@/components/error-state";
 import {
   Table,
   TableBody,
@@ -16,6 +16,7 @@ interface DataTableProps<T> {
   isLoading?: boolean;
   isError?: boolean;
   emptyMessage?: string;
+  errorState?: ErrorStateProps;
 }
 
 export function DataTable<T>({
@@ -23,6 +24,7 @@ export function DataTable<T>({
   isLoading,
   isError,
   emptyMessage = "No data found.",
+  errorState,
 }: DataTableProps<T>) {
   const colSpan = table.getAllColumns().length;
 
@@ -36,7 +38,10 @@ export function DataTable<T>({
                 <TableHead key={header.id}>
                   {header.isPlaceholder
                     ? null
-                    : flexRender(header.column.columnDef.header, header.getContext())}
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
                 </TableHead>
               ))}
             </TableRow>
@@ -45,23 +50,25 @@ export function DataTable<T>({
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={colSpan} className="text-center py-8 text-muted-foreground">
+              <TableCell
+                colSpan={colSpan}
+                className="text-center py-8 text-muted-foreground"
+              >
                 Loading…
               </TableCell>
             </TableRow>
           ) : isError ? (
             <TableRow>
               <TableCell colSpan={colSpan}>
-                <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
-                  <WifiOff className="h-8 w-8" />
-                  <p className="text-sm font-medium">Unable to reach the server</p>
-                  <p className="text-xs">Make sure the backend is running and try again.</p>
-                </div>
+                <ErrorState {...errorState} />
               </TableCell>
             </TableRow>
           ) : table.getRowModel().rows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={colSpan} className="text-center py-8 text-muted-foreground">
+              <TableCell
+                colSpan={colSpan}
+                className="text-center py-8 text-muted-foreground"
+              >
                 {emptyMessage}
               </TableCell>
             </TableRow>

@@ -47,7 +47,7 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { WifiOff } from "lucide-react";
+import { ErrorState } from "@/components/error-state";
 
 const buildColumns = (
   customerMap: Map<number, string>,
@@ -299,15 +299,10 @@ export default function OrderPage() {
             ) : isError ? (
               <TableRow>
                 <TableCell colSpan={colSpan}>
-                  <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
-                    <WifiOff className="h-8 w-8" />
-                    <p className="text-sm font-medium">
-                      Unable to reach the server
-                    </p>
-                    <p className="text-xs">
-                      Make sure the backend is running and try again.
-                    </p>
-                  </div>
+                  <ErrorState
+                    title="Unable to reach the server"
+                    description="Make sure the backend is running and try again."
+                  />
                 </TableCell>
               </TableRow>
             ) : table.getRowModel().rows.length === 0 ? (
