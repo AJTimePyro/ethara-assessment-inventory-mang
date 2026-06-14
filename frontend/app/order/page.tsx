@@ -236,7 +236,6 @@ export default function OrderPage() {
     retry: false,
   });
 
-  // query.data is reactive to setQueryData, so optimistic writes show instantly.
   const displayOrders = queryOrders ?? orders;
 
   const addMutation = useMutation({
