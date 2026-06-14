@@ -12,8 +12,9 @@ export function useCustomers() {
     queryKey: ["customers"],
     queryFn: async () => {
       const data = await customerService.getAllCustomers();
-      setCustomers(data);
-      return data;
+      const sortedData = data.sort((a, b) => a.id - b.id);
+      setCustomers(sortedData);
+      return sortedData;
     },
     retry: false,
   });

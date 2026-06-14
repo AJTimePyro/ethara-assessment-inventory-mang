@@ -12,8 +12,9 @@ export function useProducts() {
     queryKey: ["products"],
     queryFn: async () => {
       const data = await productService.getAllProducts();
-      setProducts(data);
-      return data;
+      const sortedData = data.sort((a, b) => a.id - b.id);
+      setProducts(sortedData);
+      return sortedData;
     },
     retry: false,
   });

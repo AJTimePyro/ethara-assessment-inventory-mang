@@ -229,8 +229,9 @@ export default function OrderPage() {
     queryKey: ["orders"],
     queryFn: async () => {
       const data = await orderService.getAllOrders();
-      setOrders(data);
-      return data;
+      const sortedData = data.sort((a, b) => a.id - b.id);
+      setOrders(sortedData);
+      return sortedData;
     },
     retry: false,
   });
