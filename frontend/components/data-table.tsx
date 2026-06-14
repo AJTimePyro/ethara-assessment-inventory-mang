@@ -26,6 +26,7 @@ export function DataTable<T>({
   emptyMessage = "No data found.",
   errorState,
 }: DataTableProps<T>) {
+  "use no memo";
   const colSpan = table.getAllColumns().length;
 
   return (

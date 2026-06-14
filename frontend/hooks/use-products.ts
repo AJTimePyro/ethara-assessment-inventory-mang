@@ -1,6 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { productService } from "@/services/product_service";
 import { useProductStore } from "@/store/product-store";
+import type { Product } from "@/types/product";
+
+const EMPTY: Product[] = [];
 
 export function useProducts() {
   const { setProducts } = useProductStore();
@@ -15,7 +18,5 @@ export function useProducts() {
     retry: false,
   });
 
-  // query.data is reactive to both query fetches AND queryClient.setQueryData() calls,
-  // so optimistic writes are immediately visible without a stale getQueryData() read.
-  return { products: query.data ?? [], ...query };
+  return { products: query.data ?? EMPTY, ...query };
 }

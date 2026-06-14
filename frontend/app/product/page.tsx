@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   type ColumnDef,
@@ -204,6 +204,7 @@ function EditProductDialog({
 }
 
 export default function ProductPage() {
+  "use no memo";
   const queryClient = useQueryClient();
   const { addProduct, updateProduct, removeProduct, setProducts } =
     useProductStore();
@@ -302,14 +303,21 @@ export default function ProductPage() {
     },
   });
 
-  function handleEdit(product: Product) {
+  const handleEdit = useCallback((product: Product) => {
     setEditTarget(product);
     setEditOpen(true);
-  }
+  }, []);
+
+  const handleDelete = useCallback((id: number) => setDeleteId(id), []);
+
+  const tableColumns = useMemo(
+    () => columns(handleEdit, handleDelete),
+    [handleEdit, handleDelete],
+  );
 
   const table = useReactTable({
     data: products,
-    columns: columns(handleEdit, (id) => setDeleteId(id)),
+    columns: tableColumns,
     getCoreRowModel: getCoreRowModel(),
   });
 

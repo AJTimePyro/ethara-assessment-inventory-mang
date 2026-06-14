@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   type ColumnDef,
@@ -114,6 +114,7 @@ function AddCustomerDialog({
 }
 
 export default function CustomerPage() {
+  "use no memo";
   const queryClient = useQueryClient();
   const { addCustomer, removeCustomer, setCustomers } = useCustomerStore();
   const { customers, isLoading, isError } = useCustomers();
@@ -177,9 +178,13 @@ export default function CustomerPage() {
     },
   });
 
+  const handleDelete = useCallback((id: number) => setDeleteId(id), []);
+
+  const tableColumns = useMemo(() => columns(handleDelete), [handleDelete]);
+
   const table = useReactTable({
     data: customers,
-    columns: columns((id) => setDeleteId(id)),
+    columns: tableColumns,
     getCoreRowModel: getCoreRowModel(),
   });
 
